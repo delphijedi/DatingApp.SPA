@@ -1,3 +1,4 @@
+import { JwtHelperService, JWT_OPTIONS } from '@auth0/angular-jwt';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import 'rxjs/add/operator/map';
@@ -6,10 +7,13 @@ import 'rxjs/add/observable/throw';
 import { Observable } from 'rxjs/Observable';
 
 
+
 @Injectable()
 export class AuthService {
     baseUrl = 'http://localhost:5000/api/auth/';
     userToken: any;
+    decodedToken: any;
+    jwtHelper: JwtHelperService = new JwtHelperService();
 constructor(private http: HttpClient) {}
 
 login(model: any) {
@@ -18,12 +22,21 @@ login(model: any) {
         const tokenString2 = JSON.parse(tokenString);
         if (tokenString2) {
             localStorage.setItem('token', tokenString2.tokenString);
+            this.decodedToken = this.jwtHelper.decodeToken(tokenString);
+            console.log(this.decodedToken);
             this.userToken = tokenString;
         }
     }).catch(this.handleError);
 }
     registerUser(model: any) {
         return this.http.post(this.baseUrl + 'register', model, this.requestOptions()).catch(this.handleError);
+    }
+    loggedIn() {
+        const decodedToken = localStorage.getItem('token');
+        if (decodedToken == null) {
+            return false;
+        }
+        return !this.jwtHelper.isTokenExpired(decodedToken);
     }
 
     private requestOptions() {
